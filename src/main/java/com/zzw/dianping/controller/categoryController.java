@@ -33,8 +33,6 @@ public class categoryController {
     @RequestMapping("/list")
     public commonRes list(pageQuery pageQuery) {
 
-
-
         List<categoryModel> categoryModels = categoryService.selectAll();
 
 
