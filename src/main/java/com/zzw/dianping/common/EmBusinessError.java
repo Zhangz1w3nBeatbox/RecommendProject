@@ -17,7 +17,9 @@ public enum EmBusinessError {
 
     Login_Fail(20002,"手机号或者密码错误！"),
 
-    Admin_Login_Fail(30001,"admin需要登录"),;
+    Admin_Login_Fail(30001,"admin需要登录"),
+
+    Category_Name_Duplicated(40001,"品类名已经存在"),;
 
     private Integer errorCode;
 
