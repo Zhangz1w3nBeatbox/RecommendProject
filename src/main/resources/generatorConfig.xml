@@ -22,13 +22,13 @@
             <property name="forceBigDecimals" value="false" />
         </javaTypeResolver>
         <!-- 生成模型的包名和位置 -->
-        <javaModelGenerator targetPackage="com.demo.projo"
+        <javaModelGenerator targetPackage="com.zzw.dianping.model"
                             targetProject="./src/main/java">
             <property name="enableSubPackages" value="true" />
             <property name="trimStrings" value="true" />
         </javaModelGenerator>
         <!-- 生成映射文件的包名和位置 -->
-        <sqlMapGenerator targetPackage="com.demo.mapping"
+        <sqlMapGenerator targetPackage="."
                          targetProject="./src/main/java">
             <property name="enableSubPackages" value="true" />
         </sqlMapGenerator>

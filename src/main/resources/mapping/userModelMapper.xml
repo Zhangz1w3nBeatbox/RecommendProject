@@ -14,6 +14,12 @@
     id, created_at, updated_at, telphone, password, nick_name, gender
   </sql>
 
+  <select id="countAllUser" resultType="java.lang.Integer">
+    select
+        count(1)
+    from dp_user
+
+  </select>
 
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     select 
@@ -23,6 +29,19 @@
 
   </select>
 
+  <select id="selectByPhone" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from dp_user
+    where telphone = #{telphone,jdbcType=VARCHAR}
+  </select>
+
+
+  <select id="selectByTelphoneAndPassword" resultMap="BaseResultMap">
+    select <include refid="Base_Column_List" />
+    from dp_user
+    where telphone = #{telphone} and password = #{password}
+  </select>
 
 
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
