@@ -9,6 +9,7 @@ import java.util.List;
 @Service
 public interface sellerService {
 
+    Integer countAllSeller();
     sellerModel create(sellerModel sellerModel);
     sellerModel get(Integer id);
     List<sellerModel> selectAll();

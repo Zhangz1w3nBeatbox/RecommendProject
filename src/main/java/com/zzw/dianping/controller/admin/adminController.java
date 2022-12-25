@@ -4,6 +4,9 @@ import com.zzw.dianping.common.*;
 import com.zzw.dianping.model.userModel;
 import com.zzw.dianping.request.registerRequest;
 import com.zzw.dianping.service.UserService;
+import com.zzw.dianping.service.categoryService;
+import com.zzw.dianping.service.sellerService;
+import com.zzw.dianping.service.shopService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -39,15 +42,31 @@ public class adminController {
     @Autowired
     public UserService userService;
 
+    @Autowired
+    public shopService shopService;
+
+    @Autowired
+    public sellerService sellerService;
+
+    @Autowired
+    public categoryService categoryService;
+
 
     //admin后台首页-html版本
     @RequestMapping("/index")
     @AdminPermission
     public ModelAndView index() {
+
         ModelAndView modelAndView = new ModelAndView("/admin/admin/index");
+
+        modelAndView.addObject("userCount",userService.countAllUser());
+        modelAndView.addObject("shopCount",shopService.countAllShop());
+        modelAndView.addObject("sellerCount",sellerService.countAllSeller());
+        modelAndView.addObject("categoryCount",categoryService.countAllCategory());
+
         modelAndView.addObject("CONTROLLER_NAME","admin");
         modelAndView.addObject("ACTION_NAME","index");
-        modelAndView.addObject("userCount",userService.countAllUser());
+
         return modelAndView;
     }
 //    //admin后台首页-json版本

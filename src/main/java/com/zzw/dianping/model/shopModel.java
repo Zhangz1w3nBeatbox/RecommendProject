@@ -3,6 +3,8 @@ package com.zzw.dianping.model;
 import java.math.BigDecimal;
 import java.util.Date;
 
+
+//门店类
 public class shopModel {
     /**
      *

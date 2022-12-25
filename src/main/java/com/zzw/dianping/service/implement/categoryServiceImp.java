@@ -25,6 +25,11 @@ public class categoryServiceImp implements categoryService {
     private categoryModelMapper categoryModelMapper;
 
     @Override
+    public Integer countAllCategory() {
+        return categoryModelMapper.countAllCategory();
+    }
+
+    @Override
     @Transactional
     public categoryModel create(categoryModel categoryModel) throws BusinessException {
         categoryModel.setCreatedAt(new Date());

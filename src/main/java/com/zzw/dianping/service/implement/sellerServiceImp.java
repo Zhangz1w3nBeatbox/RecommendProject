@@ -21,6 +21,11 @@ public class sellerServiceImp implements sellerService {
     private sellerModelMapper sellerModelMapper;
 
     @Override
+    public Integer countAllSeller() {
+        return sellerModelMapper.countAllSeller();
+    }
+
+    @Override
     @Transactional
     public sellerModel create(sellerModel sellerModel) {
         sellerModel.setCreatedAt(new Date());

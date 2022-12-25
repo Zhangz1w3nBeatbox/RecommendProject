@@ -9,7 +9,7 @@ import java.util.List;
 
 @Service
 public interface categoryService {
-
+    Integer countAllCategory();
     categoryModel create(categoryModel categoryModel) throws BusinessException;
     categoryModel get(Integer id);
     List<categoryModel> selectAll();
