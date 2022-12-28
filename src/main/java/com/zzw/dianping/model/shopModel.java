@@ -88,6 +88,9 @@ public class shopModel {
      * @mbg.generated Sun Jul 21 18:38:57 CST 2019
      */
     private Integer categoryId;
+
+
+
     private com.zzw.dianping.model.categoryModel categoryModel;
 
     /**
