@@ -61,8 +61,11 @@ public class shopController {
         }
 
         List<shopModel> recommendShops = shopService.search(longitude, latitude,keyword);
+
         HashMap<String, Object> res = new HashMap<>();
+
         res.put("shop",recommendShops);
+
         return commonRes.creat(res);
     }
 
