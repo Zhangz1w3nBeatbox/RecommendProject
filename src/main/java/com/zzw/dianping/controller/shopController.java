@@ -9,6 +9,7 @@ import com.zzw.dianping.service.categoryService;
 import com.zzw.dianping.service.shopService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -18,6 +19,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.validation.Valid;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -33,7 +35,7 @@ public class shopController {
     public shopService shopService;
 
 
-    //推荐门店
+    //推荐门店1.0
     @ResponseBody
     @RequestMapping("/recommend")
     public commonRes list(@RequestParam("longitude")BigDecimal longitude,@RequestParam("latitude")BigDecimal latitude) throws BusinessException {
@@ -48,7 +50,21 @@ public class shopController {
     }
 
 
+    //
+    //推荐门店
+    @ResponseBody
+    @RequestMapping("/search")
+    public commonRes search(@RequestParam("longitude")BigDecimal longitude,@RequestParam("latitude")BigDecimal latitude,@RequestParam("keyword") String keyword) throws BusinessException {
 
+        if(StringUtils.isEmpty(keyword)||longitude==null||latitude==null){
+            throw new BusinessException(EmBusinessError.Validate_Parameter_Error);
+        }
+
+        List<shopModel> recommendShops = shopService.search(longitude, latitude,keyword);
+        HashMap<String, Object> res = new HashMap<>();
+        res.put("shop",recommendShops);
+        return commonRes.creat(res);
+    }
 
 }
 

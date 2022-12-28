@@ -65,12 +65,16 @@ public interface shopModelMapper {
      */
     int updateByPrimaryKey(shopModel record);
     List<shopModel> recommend(@Param("longitude") BigDecimal longitude, @Param("latitude") BigDecimal latitude);
+//    List<shopModel> search(@Param("longitude") BigDecimal longitude,
+//                           @Param("latitude") BigDecimal latitude,
+//                           @Param("keyword")String keyword,
+//                           @Param("orderby")Integer orderby,
+//                           @Param("categoryId")Integer categoryId,
+//                           @Param("tags")String tags);
+
     List<shopModel> search(@Param("longitude") BigDecimal longitude,
                            @Param("latitude") BigDecimal latitude,
-                           @Param("keyword")String keyword,
-                           @Param("orderby")Integer orderby,
-                           @Param("categoryId")Integer categoryId,
-                           @Param("tags")String tags);
+                           @Param("keyword")String keyword);
 
     List<Map<String,Object>> searchGroupByTags(@Param("keyword")String keyword,
                                                @Param("categoryId")Integer categoryId,

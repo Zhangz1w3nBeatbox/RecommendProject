@@ -119,14 +119,26 @@ public class shopServiceImpl implements shopService {
     }
 
     @Override
-    public List<shopModel> search(BigDecimal longitude,
-                                  BigDecimal latitude, String keyword,Integer orderby,
-                                  Integer categoryId,String tags) {
-        List<shopModel> shopModelList = shopModelMapper.search(longitude,latitude,keyword,orderby,categoryId,tags);
+    public List<shopModel> search(BigDecimal longitude, BigDecimal latitude, String keyword) {
+        List<shopModel> shopModelList = shopModelMapper.search(longitude, latitude,keyword);
         shopModelList.forEach(shopModel -> {
             shopModel.setSellerModel(sellerService.get(shopModel.getSellerId()));
             shopModel.setCategoryModel(categoryService.get(shopModel.getCategoryId()));
         });
         return shopModelList;
     }
+
+//    @Override
+//    public List<shopModel> search(BigDecimal longitude,
+//                                  BigDecimal latitude, String keyword,Integer orderby,
+//                                  Integer categoryId,String tags) {
+//        List<shopModel> shopModelList = shopModelMapper.search(longitude,latitude,keyword,orderby,categoryId,tags);
+//        shopModelList.forEach(shopModel -> {
+//            shopModel.setSellerModel(sellerService.get(shopModel.getSellerId()));
+//            shopModel.setCategoryModel(categoryService.get(shopModel.getCategoryId()));
+//        });
+//        return shopModelList;
+//    }
+
+
 }
