@@ -266,7 +266,8 @@
     * COS(latitude* PI() / 180) * POW(SIN(PI() * (#{longitude} - longitude) / 360), 2))))) AS distance
     from dp_shop
     order by (0.95*1/log10(distance)+ 0.05*remark_score/5)  DESC
-</select>
+ </select>
+
 
   <select id="search" resultMap="BaseResultMap">
     select
