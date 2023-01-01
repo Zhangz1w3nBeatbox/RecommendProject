@@ -21,5 +21,5 @@ public interface shopService {
 
     //List<shopModel> search(BigDecimal longitude,BigDecimal latitude,String keyword,Integer orderby,Integer categoryId,String tags);
 
-    List<shopModel> search(BigDecimal longitude, BigDecimal latitude, String keyword);
+    List<shopModel> search(BigDecimal longitude, BigDecimal latitude, String keyword,Integer orderby,Integer categoryId,String tags);
 }
