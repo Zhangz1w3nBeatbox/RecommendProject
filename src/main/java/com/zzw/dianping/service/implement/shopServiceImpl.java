@@ -9,17 +9,29 @@ import com.zzw.dianping.model.shopModel;
 import com.zzw.dianping.service.categoryService;
 import com.zzw.dianping.service.sellerService;
 import com.zzw.dianping.service.shopService;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.core.TimeValue;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class shopServiceImpl implements shopService {
+
 
     @Autowired
     private shopModelMapper shopModelMapper;
@@ -29,6 +41,9 @@ public class shopServiceImpl implements shopService {
 
     @Autowired
     private sellerService sellerService;
+
+    @Autowired
+    private RestHighLevelClient highLevelClient;
 
     @Override
     @Transactional
@@ -128,17 +143,35 @@ public class shopServiceImpl implements shopService {
         return shopModelList;
     }
 
-//    @Override
-//    public List<shopModel> search(BigDecimal longitude,
-//                                  BigDecimal latitude, String keyword,Integer orderby,
-//                                  Integer categoryId,String tags) {
-//        List<shopModel> shopModelList = shopModelMapper.search(longitude,latitude,keyword,orderby,categoryId,tags);
-//        shopModelList.forEach(shopModel -> {
-//            shopModel.setSellerModel(sellerService.get(shopModel.getSellerId()));
-//            shopModel.setCategoryModel(categoryService.get(shopModel.getCategoryId()));
-//        });
-//        return shopModelList;
-//    }
+    @Override
+    public Map<String, Object> searchES(BigDecimal longitude, BigDecimal latitude, String keyword, Integer orderby, Integer categoryId, String tags) throws IOException {
+
+        Map<String, Object> res = new HashMap<>();
+
+        SearchRequest searchRequest = new SearchRequest("shop");
+        SearchSourceBuilder SourceBuilder = new SearchSourceBuilder();
+        SourceBuilder.query(QueryBuilders.matchQuery("name",keyword));
+        SourceBuilder.timeout(new TimeValue(60, TimeUnit.SECONDS));
+        searchRequest.source(SourceBuilder);
+
+        List<Integer> shopIdList =new ArrayList<>();
+
+        SearchResponse searchResponse = highLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+        SearchHit[] hits = searchResponse.getHits().getHits();
+
+        for(SearchHit hit:hits){
+            shopIdList.add(new Integer(hit.getSourceAsMap().get("id").toString()));
+        }
+
+        List<shopModel> shopModel = shopIdList.stream().map(id -> {
+            return get(id);
+        }).collect(Collectors.toList());
+
+
+        res.put("shop",shopModel);
+
+        return res;
+    }
 
 
 }

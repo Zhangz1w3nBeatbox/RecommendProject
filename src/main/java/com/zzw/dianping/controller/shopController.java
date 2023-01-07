@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.validation.Valid;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
@@ -61,19 +62,22 @@ public class shopController {
                             @RequestParam("keyword") String keyword,
                             @RequestParam(value = "orderby",required = false) Integer orderby,
                             @RequestParam(value = "categoryId",required = false) Integer categoryId,
-                            @RequestParam(value = "tags",required = false) String tags) throws BusinessException {
+                            @RequestParam(value = "tags",required = false) String tags) throws BusinessException, IOException {
 
         if(StringUtils.isEmpty(keyword)||longitude==null||latitude==null){
             throw new BusinessException(EmBusinessError.Validate_Parameter_Error);
         }
 
-        List<shopModel> shopModels = shopService.search(longitude,latitude,keyword,orderby,categoryId,tags);
+        //List<shopModel> shopModels = shopService.search(longitude,latitude,keyword,orderby,categoryId,tags);
+        Map<String, Object> stringObjectMap = shopService.searchES(longitude, latitude, keyword, orderby, categoryId, tags);
+        List<shopModel> shopModelsEs = (List<shopModel>)stringObjectMap.get("shop");
+
         List<categoryModel> categoryModels = categoryService.selectAll();
         List<Map<String, Object>> groupByTags = shopService.searchGroupByTags(keyword, categoryId, tags);
 
         HashMap<String, Object> res = new HashMap<>();
 
-        res.put("shop",shopModels);
+        res.put("shop",shopModelsEs);
         res.put("category",categoryModels);
         res.put("tags",groupByTags);
 

@@ -4,6 +4,7 @@ import com.zzw.dianping.common.BusinessException;
 import com.zzw.dianping.model.shopModel;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -22,4 +23,5 @@ public interface shopService {
     //List<shopModel> search(BigDecimal longitude,BigDecimal latitude,String keyword,Integer orderby,Integer categoryId,String tags);
 
     List<shopModel> search(BigDecimal longitude, BigDecimal latitude, String keyword,Integer orderby,Integer categoryId,String tags);
+    Map<String,Object> searchES(BigDecimal longitude, BigDecimal latitude, String keyword,Integer orderby,Integer categoryId,String tags) throws IOException;
 }
