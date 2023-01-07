@@ -374,7 +374,7 @@ public class shopServiceImpl implements shopService {
             jsonRequestObj.getJSONArray("sort").getJSONObject(0).getJSONObject("_score").put("order","asc");
         }
 
-        //聚合--
+        //聚合
         jsonRequestObj.put("aggs",new JSONObject());
         jsonRequestObj.getJSONObject("aggs").put("group_by_tags",new JSONObject());
         jsonRequestObj.getJSONObject("aggs").getJSONObject("group_by_tags").put("terms",new JSONObject());
