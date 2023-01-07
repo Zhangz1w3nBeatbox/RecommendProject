@@ -1,5 +1,7 @@
 package com.zzw.dianping.service.implement;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.zzw.dianping.common.BusinessException;
 import com.zzw.dianping.common.EmBusinessError;
 import com.zzw.dianping.dal.shopModelMapper;
@@ -9,9 +11,12 @@ import com.zzw.dianping.model.shopModel;
 import com.zzw.dianping.service.categoryService;
 import com.zzw.dianping.service.sellerService;
 import com.zzw.dianping.service.shopService;
+import org.apache.http.util.EntityUtils;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -148,27 +153,231 @@ public class shopServiceImpl implements shopService {
 
         Map<String, Object> res = new HashMap<>();
 
-        SearchRequest searchRequest = new SearchRequest("shop");
-        SearchSourceBuilder SourceBuilder = new SearchSourceBuilder();
-        SourceBuilder.query(QueryBuilders.matchQuery("name",keyword));
-        SourceBuilder.timeout(new TimeValue(60, TimeUnit.SECONDS));
-        searchRequest.source(SourceBuilder);
+//        SearchRequest searchRequest = new SearchRequest("shop");
+//        SearchSourceBuilder SourceBuilder = new SearchSourceBuilder();
+//        SourceBuilder.query(QueryBuilders.matchQuery("name",keyword));
+//        SourceBuilder.timeout(new TimeValue(60, TimeUnit.SECONDS));
+//        searchRequest.source(SourceBuilder);
+//
+//        List<Integer> shopIdList =new ArrayList<>();
+//
+//        SearchResponse searchResponse = highLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+//        SearchHit[] hits = searchResponse.getHits().getHits();
+//
+//        for(SearchHit hit:hits){
+//            shopIdList.add(new Integer(hit.getSourceAsMap().get("id").toString()));
+//        }
+        Request request = new Request("GET", "/shop/_search");
+//        String reqJson = "{\n" +
+//                " \"_source\": \"*\",\n" +
+//                " \"script_fields\": {\n" +
+//                "   \"distance\": {\n" +
+//                "     \"script\": {\n" +
+//                "       \"source\": \"haversin(lat,lon,doc['location'].lat,doc['location'].lon)\",\n" +
+//                "       \"lang\": \"expression\",\n" +
+//                "       \"params\": {\"lat\":"+latitude.toString()+",\"lon\":"+longitude.toString()+"}\n" +
+//                "     }\n" +
+//                "   }\n" +
+//                " },\n" +
+//                " \"query\": {\n" +
+//                "   \"function_score\": {\n" +
+//                "     \"query\": {\n" +
+//                "       \"bool\": {\n" +
+//                "         \"must\": [\n" +
+//                "           {\"match\": {\"name\": {\"query\": \""+keyword+"\",\"boost\":0.1}}},\n" +
+//                "           {\"term\": {\"seller_disabled_flag\": 0}}\n" +
+//                "           \n" +
+//                "         ]\n" +
+//                "       }\n" +
+//                "     },\n" +
+//                "     \"functions\": [\n" +
+//                "       {\n" +
+//                "         \"gauss\": {\n" +
+//                "           \"location\": {\n" +
+//                "             \"origin\": \""+latitude.toString()+","+longitude.toString()+"\",\n" +
+//                "             \"scale\": \"100km\",\n" +
+//                "             \"offset\": \"0km\",\n" +
+//                "             \"decay\": 0.5\n" +
+//                "           }\n" +
+//                "         },\n" +
+//                "         \"weight\": 9\n" +
+//                "       },\n" +
+//                "       {\n" +
+//                "         \"field_value_factor\": {\n" +
+//                "           \"field\": \"remark_score\"\n" +
+//                "         },\n" +
+//                "         \"weight\": 0.2\n" +
+//                "       },\n" +
+//                "       {\n" +
+//                "         \"field_value_factor\": {\n" +
+//                "           \"field\": \"seller_remark_score\"\n" +
+//                "         },\n" +
+//                "         \"weight\": 0.1\n" +
+//                "       }\n" +
+//                "     ],\n" +
+//                "     \"score_mode\": \"sum\",\n" +
+//                "     \"boost_mode\": \"sum\"\n" +
+//                "   }\n" +
+//                " },\n" +
+//                " \"sort\": [\n" +
+//                "   {\n" +
+//                "     \"_score\": {\n" +
+//                "       \"order\": \"desc\"\n" +
+//                "     }\n" +
+//                "   }\n" +
+//                " ]\n" +
+//                "}";
 
-        List<Integer> shopIdList =new ArrayList<>();
+        // 构建请求
+        System.out.println("-----------");
+        JSONObject jsonRequestObj = new JSONObject();
+        // 构建source
+        jsonRequestObj.put("_source", "*");
 
-        SearchResponse searchResponse = highLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-        SearchHit[] hits = searchResponse.getHits().getHits();
+        // 构建自定义距离
+        jsonRequestObj.put("script_fields",new JSONObject());
+        jsonRequestObj.getJSONObject("script_fields").put("distance",new JSONObject());
+        jsonRequestObj.getJSONObject("script_fields").getJSONObject("distance").put("script",new JSONObject());
+        jsonRequestObj.getJSONObject("script_fields").getJSONObject("distance").getJSONObject("script")
+                .put("source","haversin(lat, lon, doc['location'].lat, doc['location'].lon)");
+        jsonRequestObj.getJSONObject("script_fields").getJSONObject("distance").getJSONObject("script")
+                .put("lang","expression");
+        jsonRequestObj.getJSONObject("script_fields").getJSONObject("distance").getJSONObject("script")
+                .put("params",new JSONObject());
+        jsonRequestObj.getJSONObject("script_fields").getJSONObject("distance").getJSONObject("script")
+                .getJSONObject("params").put("lat",latitude);
+        jsonRequestObj.getJSONObject("script_fields").getJSONObject("distance").getJSONObject("script")
+                .getJSONObject("params").put("lon",longitude);
 
-        for(SearchHit hit:hits){
-            shopIdList.add(new Integer(hit.getSourceAsMap().get("id").toString()));
+
+        // 构建query
+//        Map<String,Object> cixingMap = analyzeCategoryKeyword(keyword);
+//        boolean isAffectFilter = false;
+//        boolean isAffectOrder =  true;
+        jsonRequestObj.put("query",new JSONObject());
+
+
+        //构建function score
+        jsonRequestObj.getJSONObject("query").put("function_score",new JSONObject());
+
+        //构建function query
+        jsonRequestObj.getJSONObject("query").getJSONObject("function_score").put("query",new JSONObject());
+        jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").put("bool",new JSONObject());
+        jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool").put("must",new JSONArray());
+        jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
+                        .getJSONArray("must").add(new JSONObject());
+
+        int queryIndex=0;
+
+        jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
+                        .getJSONArray("must").getJSONObject(queryIndex).put("match",new JSONObject());
+        jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
+                         .getJSONArray("must").getJSONObject(queryIndex).getJSONObject("match").put("name",new JSONObject());
+        jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
+                .getJSONArray("must").getJSONObject(queryIndex).getJSONObject("match").getJSONObject("name").put("query",keyword);
+        jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
+                .getJSONArray("must").getJSONObject(queryIndex).getJSONObject("match").getJSONObject("name").put("boost",0.1);
+
+
+        queryIndex++;
+
+        //第二个query查询条件-seller_disabled_flag
+        jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
+                .getJSONArray("must").add(new JSONObject());
+        jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
+                .getJSONArray("must").getJSONObject(queryIndex).put("term",new JSONObject());
+        jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
+                .getJSONArray("must").getJSONObject(queryIndex).getJSONObject("term").put("seller_disabled_flag",0);
+
+
+        if(categoryId!=null){
+            queryIndex++;
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
+                    .getJSONArray("must").add(new JSONObject());
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
+                    .getJSONArray("must").getJSONObject(queryIndex).put("term",new JSONObject());
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
+                    .getJSONArray("must").getJSONObject(queryIndex).getJSONObject("term").put("category_id",categoryId);
+
         }
 
-        List<shopModel> shopModel = shopIdList.stream().map(id -> {
-            return get(id);
-        }).collect(Collectors.toList());
+
+        jsonRequestObj.getJSONObject("query").getJSONObject("function_score").put("functions",new JSONArray());
+
+        int functionIndex=0;
+
+        if(orderby==null){
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").add(new JSONObject());
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).put("gauss",new JSONObject());
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).getJSONObject("gauss").put("location",new JSONObject());
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).getJSONObject("gauss")
+                    .getJSONObject("location").put("origin",latitude.toString()+","+longitude.toString());
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).getJSONObject("gauss")
+                    .getJSONObject("location").put("scale","100km");
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).getJSONObject("gauss")
+                    .getJSONObject("location").put("offset","0km");
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).getJSONObject("gauss")
+                    .getJSONObject("location").put("decay","0.5");
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).put("weight",9);
+
+            functionIndex++;
+
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").add(new JSONObject());
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).put("field_value_factor",new JSONObject());
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).getJSONObject("field_value_factor")
+                    .put("field","remark_score");
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).put("weight",0.2);
 
 
-        res.put("shop",shopModel);
+            functionIndex++;
+
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").add(new JSONObject());
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).put("field_value_factor",new JSONObject());
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).getJSONObject("field_value_factor")
+                    .put("field","seller_remark_score");
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).put("weight",0.1);
+
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").put("score_mode","sum");
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").put("boost_mode","sum");
+
+        }
+
+        jsonRequestObj.put("sort",new JSONArray());
+        jsonRequestObj.getJSONArray("sort").add(new JSONObject());
+        jsonRequestObj.getJSONArray("sort").getJSONObject(0).put("_score",new JSONObject());
+
+        if(orderby==null){
+            jsonRequestObj.getJSONArray("sort").getJSONObject(0).getJSONObject("_score").put("order","desc");
+        }else{
+            //jsonRequestObj.getJSONArray("sort").getJSONObject(0).getJSONObject("_score").put("order","asc");
+        }
+
+        String reqJson = jsonRequestObj.toJSONString();
+
+        System.out.println(reqJson);
+        request.setJsonEntity(reqJson);
+
+        Response response = highLevelClient.getLowLevelClient().performRequest(request);
+        String responseStr = EntityUtils.toString(response.getEntity());
+        System.out.println(responseStr);
+
+        JSONObject jsonObject = JSONObject.parseObject(responseStr);
+        JSONArray jsonArray = jsonObject.getJSONObject("hits").getJSONArray("hits");
+
+
+        List<shopModel> shopModelList = new ArrayList<>();
+
+        for(int i=0;i<jsonArray.size();++i){
+            JSONObject jsonObj = jsonArray.getJSONObject(i);
+            Integer id = new Integer(jsonObj.get("_id").toString());
+
+            BigDecimal distance = new BigDecimal(jsonObj.getJSONObject("fields").getJSONArray("distance").get(0).toString());
+            shopModel shopModel = get(id);
+            shopModel.setDistance(distance.multiply(new BigDecimal(1000).setScale(0,BigDecimal.ROUND_CEILING)).intValue());
+            shopModelList.add(shopModel);
+        }
+
+        res.put("shop",shopModelList);
 
         return res;
     }
