@@ -229,7 +229,6 @@ public class shopServiceImpl implements shopService {
 //                "}";
 
         // 构建请求
-        System.out.println("-----------");
         JSONObject jsonRequestObj = new JSONObject();
         // 构建source
         jsonRequestObj.put("_source", "*");
@@ -289,6 +288,20 @@ public class shopServiceImpl implements shopService {
         jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
                 .getJSONArray("must").getJSONObject(queryIndex).getJSONObject("term").put("seller_disabled_flag",0);
 
+        //选择了筛选标签
+        //TODO:mysql的一个门店的tags有很多条 但是mysql检测只能把一整条检索出来 不能检索 类似于 "有wifi 空气好"的为两个tags 而使用es则可以完美结解决-while space
+
+        if(tags!=null){
+            queryIndex++;
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
+                    .getJSONArray("must").add(new JSONObject());
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
+                    .getJSONArray("must").getJSONObject(queryIndex).put("term",new JSONObject());
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
+                    .getJSONArray("must").getJSONObject(queryIndex).getJSONObject("term").put("tags",tags);
+
+        }
+
 
         if(categoryId!=null){
             queryIndex++;
@@ -306,7 +319,7 @@ public class shopServiceImpl implements shopService {
 
         int functionIndex=0;
 
-        if(orderby==null){
+        if(orderby==null){//默认排序
             jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").add(new JSONObject());
             jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).put("gauss",new JSONObject());
             jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).getJSONObject("gauss").put("location",new JSONObject());
@@ -340,6 +353,15 @@ public class shopServiceImpl implements shopService {
             jsonRequestObj.getJSONObject("query").getJSONObject("function_score").put("score_mode","sum");
             jsonRequestObj.getJSONObject("query").getJSONObject("function_score").put("boost_mode","sum");
 
+        }else{
+            //低价排序功能
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").add(new JSONObject());
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).put("field_value_factor",new JSONObject());
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).getJSONObject("field_value_factor")
+                    .put("field","price_per_man");
+            //jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).put("weight",1);
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").put("score_mode","sum");
+            jsonRequestObj.getJSONObject("query").getJSONObject("function_score").put("boost_mode","replace");
         }
 
         jsonRequestObj.put("sort",new JSONArray());
@@ -349,8 +371,16 @@ public class shopServiceImpl implements shopService {
         if(orderby==null){
             jsonRequestObj.getJSONArray("sort").getJSONObject(0).getJSONObject("_score").put("order","desc");
         }else{
-            //jsonRequestObj.getJSONArray("sort").getJSONObject(0).getJSONObject("_score").put("order","asc");
+            jsonRequestObj.getJSONArray("sort").getJSONObject(0).getJSONObject("_score").put("order","asc");
         }
+
+        //聚合--
+        jsonRequestObj.put("aggs",new JSONObject());
+        jsonRequestObj.getJSONObject("aggs").put("group_by_tags",new JSONObject());
+        jsonRequestObj.getJSONObject("aggs").getJSONObject("group_by_tags").put("terms",new JSONObject());
+        jsonRequestObj.getJSONObject("aggs").getJSONObject("group_by_tags").getJSONObject("terms").put("field","tags");
+
+
 
         String reqJson = jsonRequestObj.toJSONString();
 
@@ -377,7 +407,21 @@ public class shopServiceImpl implements shopService {
             shopModelList.add(shopModel);
         }
 
+
+        JSONArray tagsJsonArray = jsonObject.getJSONObject("aggregations").getJSONObject("group_by_tags").getJSONArray("buckets");
+        List<Map> tagsList = new ArrayList<>();
+
+        for(int i=0;i<tagsJsonArray.size();++i){
+            JSONObject jsonObj = tagsJsonArray.getJSONObject(i);
+            HashMap<String, Object> tagMap = new HashMap<>();
+            tagMap.put("tags",jsonObj.getString("key"));
+            tagMap.put("num",jsonObj.getInteger("doc_count"));
+            tagsList.add(tagMap);
+        }
+
         res.put("shop",shopModelList);
+
+        res.put("tags",tagsList);
 
         return res;
     }
