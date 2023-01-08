@@ -538,6 +538,7 @@ public class shopServiceImpl implements shopService {
             if(categoryId!=null){
                 res.put(token,categoryId);
             }
+
         }
 
         return res;
