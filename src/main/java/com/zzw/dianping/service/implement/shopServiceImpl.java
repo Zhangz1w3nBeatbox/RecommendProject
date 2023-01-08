@@ -278,7 +278,9 @@ public class shopServiceImpl implements shopService {
         System.out.println("————————————");
 
         System.out.println(cixingMap);
-        boolean isAffectFiler = true;
+
+        boolean isAffectFiler = false;//影响召回因子
+        boolean isAffectOrder = true;//影响排序因子
 
         if(cixingMap.keySet().size()>0&&isAffectFiler){//影响召回
             jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
@@ -297,10 +299,13 @@ public class shopServiceImpl implements shopService {
             jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
                     .getJSONArray("must").getJSONObject(queryIndex).getJSONObject("bool").getJSONArray("should").getJSONObject(filterQueryIndex)
                     .getJSONObject("match").getJSONObject("name").put("query",keyword);
+
             jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
                     .getJSONArray("must").getJSONObject(queryIndex).getJSONObject("bool").getJSONArray("should").getJSONObject(filterQueryIndex)
                     .getJSONObject("match").getJSONObject("name").put("boost",0.1);
 
+
+            //categoryId的term的构建
             for(String key :cixingMap.keySet()){
 
                 filterQueryIndex++;
@@ -318,9 +323,10 @@ public class shopServiceImpl implements shopService {
                 jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
                         .getJSONArray("must").getJSONObject(queryIndex).getJSONObject("bool").getJSONArray("should").getJSONObject(filterQueryIndex)
                         .getJSONObject("term").getJSONObject("category_id").put("value",cixingCategoryId);
+
                 jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONObject("query").getJSONObject("bool")
                         .getJSONArray("must").getJSONObject(queryIndex).getJSONObject("bool").getJSONArray("should").getJSONObject(filterQueryIndex)
-                        .getJSONObject("term").getJSONObject("category_id").put("boost",0.1);
+                        .getJSONObject("term").getJSONObject("category_id").put("boost",0);
             }
 
 
@@ -410,6 +416,23 @@ public class shopServiceImpl implements shopService {
             jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).getJSONObject("field_value_factor")
                     .put("field","seller_remark_score");
             jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).put("weight",0.1);
+
+
+            //词性term排序
+            if(cixingMap.keySet().size()>0&&isAffectOrder) {
+                for (String key : cixingMap.keySet()) {
+
+                    functionIndex++;
+                    jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").add(new JSONObject());
+                    jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).put("filter", new JSONObject());
+                    jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).getJSONObject("filter")
+                            .put("term", new JSONObject());
+                    jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).getJSONObject("filter")
+                            .getJSONObject("term").put("category_id", cixingMap.get(key));
+                    jsonRequestObj.getJSONObject("query").getJSONObject("function_score").getJSONArray("functions").getJSONObject(functionIndex).put("weight", 3);
+
+                }
+            }
 
             jsonRequestObj.getJSONObject("query").getJSONObject("function_score").put("score_mode","sum");
             jsonRequestObj.getJSONObject("query").getJSONObject("function_score").put("boost_mode","sum");
