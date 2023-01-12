@@ -183,6 +183,7 @@ public class shopServiceImpl implements shopService {
                 shopModel.setCategoryModel(categoryService.get(shopModel.getCategoryId()));
             });
         }else{
+
             recommendList= shopModelMapper.batchGetShopByIds(itemIds,longitude,latitude); //从数据库 批量获取视频 通过 视频id
         }
 
