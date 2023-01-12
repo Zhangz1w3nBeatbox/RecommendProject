@@ -293,15 +293,6 @@
 
   </select>
 
-<!--  <select id="search" resultMap="BaseResultMap">-->
-<!--    select-->
-<!--    <include refid="Base_Column_List" />-->
-<!--    ,ceil(1 + 1000*(2 * 6378.137* ASIN(SQRT(POW(SIN(PI() * (#{latitude} - latitude) / 360), 2) + COS(PI() * #{latitude} / 180)-->
-<!--    * COS(latitude* PI() / 180) * POW(SIN(PI() * (#{longitude} - longitude) / 360), 2))))) AS distance-->
-<!--    from dp_shop-->
-<!--    where name like CONCAT('%',#{keyword},'%')-->
-<!--  </select>-->
-
 
   <select id="searchGroupByTags" resultType="java.util.Map">
     select tags,count(1) as num from dp_shop where name like CONCAT('%',#{keyword},'%')
@@ -312,6 +303,37 @@
       and tags = #{tags}
     </if>
     group by tags
+  </select>
+
+  <select id="getAllUserPreference" resultType="com.zzw.dianping.model.userPreference">
+    select
+      userId,
+      shopId,
+      sum(case operationType
+            when '0'then 6
+            when '1'then 2
+            when '2'then 2
+            else 0 end
+        )as `value`
+    from dp_operation
+
+    group by userId,shopId
+  </select>
+
+  <select id="batchGetShopByIds" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    ,ceil(1 + 1000*(2 * 6378.137* ASIN(SQRT(POW(SIN(PI() * (#{latitude} - latitude) / 360), 2) + COS(PI() * #{latitude} / 180)
+    * COS(latitude* PI() / 180) * POW(SIN(PI() * (#{longitude} - longitude) / 360), 2))))) AS distance
+
+    from
+    dp_shop
+    where
+    id in
+    <foreach collection="idList" item="id" open="(" close=")" separator=",">
+      #{id}
+    </foreach>
+
   </select>
 
 

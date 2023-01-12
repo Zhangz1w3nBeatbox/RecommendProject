@@ -8,10 +8,23 @@ import com.zzw.dianping.dal.shopModelMapper;
 import com.zzw.dianping.model.categoryModel;
 import com.zzw.dianping.model.sellerModel;
 import com.zzw.dianping.model.shopModel;
+import com.zzw.dianping.model.userPreference;
 import com.zzw.dianping.service.categoryService;
 import com.zzw.dianping.service.sellerService;
 import com.zzw.dianping.service.shopService;
 import org.apache.http.util.EntityUtils;
+import org.apache.mahout.cf.taste.common.TasteException;
+import org.apache.mahout.cf.taste.impl.common.FastByIDMap;
+import org.apache.mahout.cf.taste.impl.model.GenericDataModel;
+import org.apache.mahout.cf.taste.impl.model.GenericPreference;
+import org.apache.mahout.cf.taste.impl.model.GenericUserPreferenceArray;
+import org.apache.mahout.cf.taste.impl.neighborhood.NearestNUserNeighborhood;
+import org.apache.mahout.cf.taste.impl.recommender.GenericUserBasedRecommender;
+import org.apache.mahout.cf.taste.impl.similarity.UncenteredCosineSimilarity;
+import org.apache.mahout.cf.taste.model.DataModel;
+import org.apache.mahout.cf.taste.model.PreferenceArray;
+import org.apache.mahout.cf.taste.recommender.RecommendedItem;
+import org.apache.mahout.cf.taste.recommender.Recommender;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Request;
@@ -127,6 +140,81 @@ public class shopServiceImpl implements shopService {
             shopModel.setCategoryModel(categoryService.get(shopModel.getCategoryId()));
         });
         return shopModelList;
+    }
+
+    @Override
+    public List<shopModel> recommendByMahout(Integer userId,BigDecimal longitude, BigDecimal latitude) throws TasteException {
+
+        List<userPreference> list=  shopModelMapper.getAllUserPreference();//得到所有用户的偏好
+
+        System.out.println(list);
+
+        DataModel dataModel = this.creatDataModel(list);//处理用户偏好数据 得到 数据模型
+        //获取用户相似度
+        UncenteredCosineSimilarity similarity = new UncenteredCosineSimilarity(dataModel);//余弦方式计算相似度
+
+        System.out.println("--------");
+        double v = similarity.userSimilarity(3, 4);
+
+        System.out.println(v);//测试 11 用户和 12 用户的用户相似度
+        //获取相邻用户
+        NearestNUserNeighborhood userNeighborhood = new NearestNUserNeighborhood(2, similarity,dataModel);//获取两个最接近的邻居
+
+        long[] ar = userNeighborhood.getUserNeighborhood(userId);
+
+        System.out.println(ar);
+
+        //构建推荐器
+        Recommender recommender = new GenericUserBasedRecommender(dataModel,userNeighborhood,similarity);//基于用户
+
+        //推荐列表
+        List<RecommendedItem> recommendedItems = recommender.recommend(userId, 5);
+
+        List<Long> itemIds = recommendedItems.stream().map(RecommendedItem::getItemID).collect(Collectors.toList());
+
+        System.out.println(itemIds);
+
+        List<shopModel> recommendList = new ArrayList<>();
+
+        if(itemIds.size()==0){//
+            recommendList = shopModelMapper.recommend(longitude,latitude);
+            recommendList.forEach(shopModel -> {
+                shopModel.setSellerModel(sellerService.get(shopModel.getSellerId()));
+                shopModel.setCategoryModel(categoryService.get(shopModel.getCategoryId()));
+            });
+        }else{
+            recommendList= shopModelMapper.batchGetShopByIds(itemIds,longitude,latitude); //从数据库 批量获取视频 通过 视频id
+        }
+
+
+
+        return recommendList;
+    }
+
+    private DataModel creatDataModel(List<userPreference> userPreferenceList) {
+
+        FastByIDMap<PreferenceArray> fastByIDMap = new FastByIDMap<>();
+
+        Map<Long, List<userPreference>> map = userPreferenceList.stream().collect(Collectors.groupingBy(userPreference::getUserId));
+
+        Collection<List<userPreference>> list = map.values();
+
+        for(List<userPreference> userPreferences:list){
+
+            GenericPreference[] array= new GenericPreference[userPreferences.size()];
+
+            for(int i=0;i<userPreferences.size();++i){
+                userPreference userPreference = userPreferences.get(i);
+                GenericPreference item = new GenericPreference(userPreference.getUserId(),userPreference.getShopId(),userPreference.getValue());
+                array[i] = item;
+            }
+
+            fastByIDMap.put(array[0].getUserID(),new GenericUserPreferenceArray(Arrays.asList(array)));
+
+        }
+
+        return new GenericDataModel(fastByIDMap);
+
     }
 
     @Override

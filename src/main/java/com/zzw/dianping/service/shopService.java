@@ -2,6 +2,7 @@ package com.zzw.dianping.service;
 
 import com.zzw.dianping.common.BusinessException;
 import com.zzw.dianping.model.shopModel;
+import org.apache.mahout.cf.taste.common.TasteException;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -15,6 +16,7 @@ public interface shopService {
     shopModel get(Integer id);
     List<shopModel> selectAll();
     List<shopModel> recommend(BigDecimal longitude,BigDecimal latitude);
+    List<shopModel> recommendByMahout(Integer userId,BigDecimal longitude, BigDecimal latitude) throws TasteException;
 
     List<Map<String,Object>> searchGroupByTags(String keyword,Integer categoryId,String tags);
 
